@@ -7,7 +7,7 @@ const AudioVisualizer = () => {
   const [audioContext, setAudioContext] = useState<any>(null);
 
   const startRecording = async () => {
-    const stream:any = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream:any = await navigator.mediaDevices.getUserMedia({audio: true , video : true});
     setAudioStream(stream);
   };
 
@@ -95,3 +95,5 @@ const AudioVisualizer = () => {
 };
 
 export default AudioVisualizer;
+
+
