@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 const AudioVisualizer = () => {
   const canvasRef = useRef(null);
   const [audioStream, setAudioStream] = useState<any>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [audioContext, setAudioContext] = useState<any>(null);
 
   const startRecording = async () => {
     const stream:any = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -12,6 +14,11 @@ const AudioVisualizer = () => {
   const stopRecording = () => {
     audioStream.getTracks().forEach((track:any) => track.stop());
     setAudioStream(null);
+    // audioContext.close();
+  };
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
   };
 
   useEffect(() => {
@@ -20,12 +27,15 @@ const AudioVisualizer = () => {
     const canvasCtx:any = canvas.getContext('2d');
     let audioCtx:any;
     let analyser:any;
-    let source;
+    let source:any;
     const bufferLength = 512;
     const dataArray = new Uint8Array(bufferLength);
 
-    const WIDTH = canvas.width;
-    const HEIGHT = canvas.height;
+    const WIDTH = isFullScreen ? window.innerWidth - 210 : 1000;
+    const HEIGHT = isFullScreen ? window.innerHeight - 210 : 500;
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+
     const barWidth = (WIDTH / bufferLength) * 8.5;
     let x = 0;
 
@@ -50,33 +60,36 @@ const AudioVisualizer = () => {
     };
 
     if (audioStream) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = new window.AudioContext();
+      setAudioContext(audioCtx);
       analyser = audioCtx.createAnalyser();
       source = audioCtx.createMediaStreamSource(audioStream);
       source.connect(analyser);
       analyser.connect(audioCtx.destination);
 
       draw();
-    } else {
-      cancelAnimationFrame(animationFrameId);
+    } else if (audioContext) {
+      // audioContext.close();
+      // cancelAnimationFrame(animationFrameId);
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      // cancelAnimationFrame(animationFrameId);
       if (audioCtx) {
-        audioCtx.close();
+        // audioCtx.close();
       }
     };
-  }, [audioStream]);
+  }, [audioStream, isFullScreen]);
 
   return (
-    <div className='bg-blue-300 p-3 text-black flex flex-col gap-3 justify-center items-center'>
-      <canvas className='bg-black rounded-lg' ref={canvasRef} width="1000" height="500"></canvas>
+    <div className='d  p-3 text-black flex flex-col gap-3 justify-center items-center'>
+      <canvas className='bg-gray-600 rounded-lg' ref={canvasRef}></canvas>
       {!audioStream ? (
-        <button className='bg-green-600 rounded-lg p-3 text-white' onClick={startRecording}>Enable Microphone</button>
+        <button className='bg-green-600 rounded-lg p-2 text-white' onClick={startRecording}>Enable Microphone</button>
       ) : (
-        <button className='bg-red-600 rounded-lg p-3 text-white'  onClick={stopRecording}>Disable Microphone</button>
+        <button className='bg-red-600 rounded-lg p-2 text-white' onClick={stopRecording}>Disable Microphone</button>
       )}
+      <button className='bg-yellow-500 rounded-lg p-2 text-white' onClick={toggleFullScreen}>{isFullScreen ? 'Restore Down' : 'Full Screen'}</button>
     </div>
   );
 };
